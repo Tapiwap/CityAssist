@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">City Assist</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="main_label">Please Enter Your Details Below</string>
+    <string name="full_name">Full Name</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="register">Register</string>
+    <string name="vehicle_type">Vehicle Type</string>
+    <string name="vehicle_model">Vehicle Model</string>
+    <string name="skip_label">Skip To Map</string>
+</resources>
