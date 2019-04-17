@@ -8,4 +8,5 @@
     <string name="vehicle_type">Vehicle Type</string>
     <string name="vehicle_model">Vehicle Model</string>
     <string name="skip_label">Skip To Map</string>
+    <string name="search_label">Search</string>
 </resources>
