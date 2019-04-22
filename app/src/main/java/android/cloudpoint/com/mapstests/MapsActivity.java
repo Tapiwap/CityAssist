@@ -31,6 +31,10 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.model.PlaceLikelihood;
+<<<<<<< HEAD
+=======
+import com.google.android.libraries.places.api.model.RectangularBounds;
+>>>>>>> 79cd386c7425738845c15813ccd48df0ca46b2db
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
@@ -50,7 +54,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final int AUTO_COMPLETE_REQUEST = 2;
     public static final int REQUEST_CODE = 1234;
     public static final float DEFAULT_ZOOM = 15f;
+<<<<<<< HEAD
     private LatLng latLng;
+=======
+>>>>>>> 79cd386c7425738845c15813ccd48df0ca46b2db
     private GoogleMap mMap;
 
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -61,7 +68,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     //Widgets
     // private EditText searchTxt;
+<<<<<<< HEAD
     private ImageView gps, mPlacePicker;
+=======
+    private ImageView gps;
+>>>>>>> 79cd386c7425738845c15813ccd48df0ca46b2db
     private AutocompleteSupportFragment autocompleteSupportFragment;
 
     @Override
@@ -69,8 +80,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+<<<<<<< HEAD
         gps = (ImageView) findViewById(R.id.ic_gps);
         mPlacePicker = (ImageView) findViewById(R.id.place_picker);
+=======
+        //PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+
+        gps = (ImageView) findViewById(R.id.ic_gps);
+>>>>>>> 79cd386c7425738845c15813ccd48df0ca46b2db
         final String KEY = getApplicationContext().getResources().getString(R.string.google_maps_key);
 
         //Get location permissions
@@ -83,7 +100,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Places.initialize(getApplicationContext(), KEY);
 
         // Create a new Places client instance.
+<<<<<<< HEAD
         final PlacesClient placesClient = Places.createClient(this);
+=======
+        PlacesClient placesClient = Places.createClient(this);
+>>>>>>> 79cd386c7425738845c15813ccd48df0ca46b2db
 
         // Use the builder to create a FindCurrentPlaceRequest.
         FindCurrentPlaceRequest request =
@@ -96,12 +117,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         activateSelfLocationListener();
 
+<<<<<<< HEAD
         mPlacePicker.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
             }
         });
 
+=======
+>>>>>>> 79cd386c7425738845c15813ccd48df0ca46b2db
         initMap();
     }
 
@@ -262,10 +286,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void getLocation(@NonNull LatLng latLng, String locationName) {
         Log.d(TAG, "getLocation: Locating...");
 
+<<<<<<< HEAD
         if (this.latLng != null) this.latLng = null;
 
         this.latLng = latLng;
         moveCameramove(this.latLng, DEFAULT_ZOOM, locationName);
+=======
+        moveCameramove(latLng, DEFAULT_ZOOM, locationName);
+>>>>>>> 79cd386c7425738845c15813ccd48df0ca46b2db
     }
 
     /**
