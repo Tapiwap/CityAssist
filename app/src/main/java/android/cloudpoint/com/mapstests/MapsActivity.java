@@ -31,7 +31,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.model.PlaceLikelihood;
-import com.google.android.libraries.places.api.model.RectangularBounds;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
@@ -51,6 +50,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final int AUTO_COMPLETE_REQUEST = 2;
     public static final int REQUEST_CODE = 1234;
     public static final float DEFAULT_ZOOM = 15f;
+    private LatLng latLng;
     private GoogleMap mMap;
 
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -61,7 +61,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     //Widgets
     // private EditText searchTxt;
-    private ImageView gps;
+    private ImageView gps, mPlacePicker;
     private AutocompleteSupportFragment autocompleteSupportFragment;
 
     @Override
@@ -69,9 +69,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        //PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
-
         gps = (ImageView) findViewById(R.id.ic_gps);
+        mPlacePicker = (ImageView) findViewById(R.id.place_picker);
         final String KEY = getApplicationContext().getResources().getString(R.string.google_maps_key);
 
         //Get location permissions
@@ -84,7 +83,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Places.initialize(getApplicationContext(), KEY);
 
         // Create a new Places client instance.
-        PlacesClient placesClient = Places.createClient(this);
+        final PlacesClient placesClient = Places.createClient(this);
 
         // Use the builder to create a FindCurrentPlaceRequest.
         FindCurrentPlaceRequest request =
@@ -96,6 +95,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setUpAutoCompleteFragment();
 
         activateSelfLocationListener();
+
+        mPlacePicker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+            }
+        });
 
         initMap();
     }
@@ -257,7 +262,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void getLocation(@NonNull LatLng latLng, String locationName) {
         Log.d(TAG, "getLocation: Locating...");
 
-        moveCameramove(latLng, DEFAULT_ZOOM, locationName);
+        if (this.latLng != null) this.latLng = null;
+
+        this.latLng = latLng;
+        moveCameramove(this.latLng, DEFAULT_ZOOM, locationName);
     }
 
     /**
