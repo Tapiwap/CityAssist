@@ -61,6 +61,7 @@
         android:scaleType="centerCrop"
         android:id="@+id/ic_gps"
         android:src="@drawable/ic_gps"/>
+
     <ImageView
         android:layout_width="40dp"
         android:layout_height="40dp"
@@ -68,8 +69,28 @@
         android:layout_marginTop="15dp"
         android:scaleType="centerCrop"
         android:id="@+id/place_picker"
-        android:layout_below="@+id/search_layout"
+        android:layout_below="@+id/place_towing"
         android:src="@drawable/ic_map"/>
+
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="15dp"
+        android:scaleType="centerCrop"
+        android:id="@+id/place_petrol"
+        android:layout_below="@+id/search_layout"
+        android:src="@drawable/ic_petrol"/>
+
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="15dp"
+        android:scaleType="centerCrop"
+        android:id="@+id/place_towing"
+        android:layout_below="@+id/place_petrol"
+        android:src="@drawable/ic_tow"/>
 </RelativeLayout>
 
 

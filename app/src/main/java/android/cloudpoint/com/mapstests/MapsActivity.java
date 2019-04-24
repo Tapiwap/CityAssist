@@ -15,6 +15,12 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -37,6 +43,11 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONArray;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -51,27 +62,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static final int REQUEST_CODE = 1234;
     public static final float DEFAULT_ZOOM = 15f;
     private LatLng latLng;
+    private LatLng userLatLong;
     private GoogleMap mMap;
 
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COURSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private FusedLocationProviderClient fusedLocationProviderClient;
+    private String API_KEY;
 
     private Boolean mLocationPermissionGranted;
+    private RequestQueue requestQueue;
 
     //Widgets
     // private EditText searchTxt;
-    private ImageView gps, mPlacePicker;
+    private ImageView gps, poi_picker, petrol_picker, car_repairs_picker;
     private AutocompleteSupportFragment autocompleteSupportFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        API_KEY = getApplicationContext().getResources().getString(R.string.google_maps_key);
 
         gps = (ImageView) findViewById(R.id.ic_gps);
-        mPlacePicker = (ImageView) findViewById(R.id.place_picker);
-        final String KEY = getApplicationContext().getResources().getString(R.string.google_maps_key);
+        poi_picker = (ImageView) findViewById(R.id.place_picker);
+        petrol_picker = (ImageView) findViewById(R.id.place_petrol);
+        car_repairs_picker = (ImageView) findViewById(R.id.place_towing);
 
         //Get location permissions
         getLocationPermission();
@@ -80,7 +96,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         List<Place.Field> placeFields = Arrays.asList(Place.Field.NAME);
 
         // Initialize Places.
-        Places.initialize(getApplicationContext(), KEY);
+        Places.initialize(getApplicationContext(), API_KEY);
 
         // Create a new Places client instance.
         final PlacesClient placesClient = Places.createClient(this);
@@ -95,12 +111,164 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setUpAutoCompleteFragment();
 
         activateSelfLocationListener();
-        mPlacePicker.setOnClickListener(new View.OnClickListener() {
+
+        requestQueue = Volley.newRequestQueue(MapsActivity.this);
+
+        poi_picker.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                parseJson("point_of_interest", userLatLong);
+            }
+        });
+
+        petrol_picker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                parseJson("gas_station", userLatLong);
+            }
+        });
+
+        car_repairs_picker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                parseJson("car_repair", userLatLong);
             }
         });
         initMap();
+    }
+
+    private void parseJson(String type, LatLng latLng) {
+        Log.d(TAG, "parseJson: Parsing nearby locations");
+        final String URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" +
+                "location=" + latLng.latitude + "," + latLng.longitude + "&radius=2000&type=" + type + "&key=" + API_KEY;
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, URL, null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d(TAG, "onResponse: Starting the parsing");
+                        try {
+                            JSONArray jsonArray = response.getJSONArray("results");
+
+                            if (jsonArray.length() > 0) {
+                                for (int i = 0; i < jsonArray.length(); i++) {
+                                    Log.d(TAG, "onResponse: loop count " + i);
+                                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                    String id = null;
+                                    String name = null;
+                                    String vicinity = null;
+                                    boolean openNow = false;
+                                    double rating = 0.0;
+                                    JSONArray types = null;
+                                    LatLng latLng = null;
+
+                                    id = getPlaceID(jsonObject, id);
+
+                                    name = getPlaceName(jsonObject, name);
+
+                                    vicinity = getPlaceVicinity(jsonObject, vicinity);
+
+
+                                    openNow = isPlaceOpenNow(jsonObject, openNow);
+
+                                    rating = getPlaceRating(jsonObject, rating);
+
+                                    types = getPlaceTypeArray(jsonObject, types);
+
+                                    //Geo Data
+                                    latLng = getPlaceLatLng(jsonObject, latLng);
+                                    Log.d(TAG, "onResponse: \n Passing complete");
+
+                                    addMultipleLocationsOnMap(name, openNow, types, latLng);
+                                }
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e(TAG, "onErrorResponse: " + error.getMessage());
+                    }
+                });
+        requestQueue.add(request);
+    }
+
+    private LatLng getPlaceLatLng(JSONObject jsonObject, LatLng latLng) throws JSONException {
+        if (jsonObject.has("geometry")) {
+            JSONObject geometry = jsonObject.getJSONObject("geometry");
+            JSONObject location = geometry.getJSONObject("location");
+            latLng = new LatLng(location.getDouble("lat"), location.getDouble("lng"));
+        }
+        return latLng;
+    }
+
+    private JSONArray getPlaceTypeArray(JSONObject jsonObject, JSONArray types) throws JSONException {
+        if (jsonObject.has("types"))
+            types = jsonObject.getJSONArray("types");
+        return types;
+    }
+
+    private double getPlaceRating(JSONObject jsonObject, double rating) throws JSONException {
+        if (jsonObject.has("rating"))
+            rating = jsonObject.getDouble("rating");
+        return rating;
+    }
+
+    private boolean isPlaceOpenNow(JSONObject jsonObject, boolean openNow) throws JSONException {
+        if (jsonObject.has("opening_hours")) {
+            JSONObject openingHours = jsonObject.getJSONObject("opening_hours");
+            openNow = openingHours.getBoolean("open_now");
+        }
+        return openNow;
+    }
+
+    private String getPlaceVicinity(JSONObject jsonObject, String vicinity) throws JSONException {
+        if (jsonObject.has("vicinity"))
+            vicinity = jsonObject.getString("vicinity");
+        return vicinity;
+    }
+
+    private String getPlaceName(JSONObject jsonObject, String name) throws JSONException {
+        if (jsonObject.has("name"))
+            name = jsonObject.getString("name");
+        return name;
+    }
+
+    private String getPlaceID(JSONObject jsonObject, String id) throws JSONException {
+        if (jsonObject.has("id"))
+            id = jsonObject.getString("id");
+        return id;
+    }
+
+    private void addMultipleLocationsOnMap(String name, boolean isOpen, JSONArray types, LatLng latLng) {
+        MarkerOptions options = new MarkerOptions();
+        ArrayList<LatLng> latLngs = new ArrayList<>();
+        latLngs.add(new LatLng(latLng.latitude, latLng.longitude));
+
+        for (LatLng point : latLngs) {
+            options.position(point);
+            options.title(name);
+            if (isOpen) {
+                options.snippet("Open");
+            }
+            try {
+                if (types.get(0).toString().equalsIgnoreCase("gas_station")) {
+                    options.snippet("Petrol Station");
+                } else if (types.get(0).toString().equalsIgnoreCase("car_repair")) {
+                    options.snippet("Car Repairs");
+                } else {
+                    options.snippet(types.get(0).toString());
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            mMap.addMarker(options);
+            mMap.animateCamera(CameraUpdateFactory.zoomOut());
+        }
     }
 
     private void activateSelfLocationListener() {
@@ -293,7 +461,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void getDeviceLocation() {
         Log.d(TAG, "getDeviceLocation: Getting Device Location");
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-
         try {
             if (mLocationPermissionGranted) {
                 Task location = fusedLocationProviderClient.getLastLocation();
@@ -304,7 +471,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             Log.d(TAG, "onComplete: Location Found");
                             Location loc = (Location) task.getResult();
                             LatLng latLng = new LatLng(loc.getLatitude(), loc.getLongitude());
+                            mMap.setMyLocationEnabled(true);
                             moveCameramove(latLng, DEFAULT_ZOOM, "My Location");
+                            assignUserLatLng(latLng);
                         } else {
                             Log.d(TAG, "onComplete: curent location is null");
                             Toast.makeText(MapsActivity.this, "Unable to get your location", Toast.LENGTH_SHORT).show();
@@ -318,6 +487,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    private void assignUserLatLng(LatLng finalLatLng) {
+        this.userLatLong = finalLatLng;
+    }
+
     /**
      * Moves the camera on the Google Map
      *
@@ -327,10 +500,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void moveCameramove(LatLng latLong, float zoom, String title) {
         Log.d(TAG, "moveCameramove: Moving Camera to Location");
-        MarkerOptions options = new MarkerOptions().position(latLong).title(title);
-        mMap.addMarker(options);
+        if (!title.equalsIgnoreCase("My Location")) {
+            MarkerOptions options = new MarkerOptions().position(latLong).title(title);
+            mMap.addMarker(options);
+        }
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLong, zoom));
-
         hideSoftKeyboard();
     }
 
