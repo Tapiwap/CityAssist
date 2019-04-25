@@ -137,7 +137,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         initMap();
     }
 
-    private void parseJson(String type, LatLng latLng) {
+    private void parseJson(final String type, LatLng latLng) {
         Log.d(TAG, "parseJson: Parsing nearby locations");
         final String URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" +
                 "location=" + latLng.latitude + "," + latLng.longitude + "&radius=2000&type=" + type + "&key=" + API_KEY;
@@ -180,6 +180,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     Log.d(TAG, "onResponse: \n Passing complete");
 
                                     addMultipleLocationsOnMap(name, openNow, types, latLng);
+                                }
+                            } else {
+                                switch (type) {
+                                    case "point_of_interest":
+                                        showToast("There are no Points of Interest around you.");
+                                        break;
+                                    case "gas_station":
+                                        showToast("There are no Pertrol Stations around you.");
+                                        break;
+                                    case "car_repair":
+                                        showToast("There are no Car Repair Establishments around you.");
                                 }
                             }
                         } catch (JSONException e) {
@@ -514,5 +525,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void hideSoftKeyboard() {
         Log.d(TAG, "hideSoftKeyboard: Hidding the keyboad");
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
+
+    /**
+     * Show message to the user
+     *
+     * @param message accepts the message to be shown
+     */
+    private void showToast(String message) {
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
     }
 }
